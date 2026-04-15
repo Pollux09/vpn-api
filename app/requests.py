@@ -7,6 +7,40 @@ from schemas.schemas import PanelCreateUserEnvelope, PanelCreateUserResponse, Pa
 from settings import settings
 
 
+def _remnawave_error_detail(response: httpx.Response) -> dict:
+    body = response.text.strip()
+    if len(body) > 2000:
+        body = f"{body[:2000]}..."
+
+    return {
+        "message": "Remnawave API returned an error",
+        "status_code": response.status_code,
+        "url": str(response.request.url),
+        "body": body or None,
+    }
+
+
+def _remnawave_unavailable_detail(exc: httpx.HTTPError, url: str) -> dict:
+    return {
+        "message": "Remnawave API is unavailable",
+        "url": url,
+        "error": str(exc),
+    }
+
+
+def _unexpected_response_detail(response: httpx.Response) -> dict:
+    body = response.text.strip()
+    if len(body) > 2000:
+        body = f"{body[:2000]}..."
+
+    return {
+        "message": "Unexpected Remnawave API response",
+        "status_code": response.status_code,
+        "url": str(response.request.url),
+        "body": body or None,
+    }
+
+
 async def create_user_request(
     username: str,
     days: int,
@@ -26,6 +60,15 @@ async def create_user_request(
     if settings.API_KEY:
         headers["X-Api-Key"] = settings.API_KEY
 
+    if not internal_squads_ids:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Remnawave returned no internal squads. "
+                "Create or enable at least one internal squad before creating users."
+            ),
+        )
+
     payload = {
         "username": username,
         "expireAt": (datetime.now(timezone.utc) + timedelta(days=days)).isoformat(),
@@ -40,15 +83,23 @@ async def create_user_request(
             result = await client.post(url=url, headers=headers, json=payload)
             result.raise_for_status()
     except httpx.HTTPStatusError as exc:
-        detail = exc.response.text or "Remnawave API returned an error"
-        raise HTTPException(status_code=exc.response.status_code, detail=detail) from exc
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=_remnawave_error_detail(exc.response),
+        ) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="Remnawave API is unavailable") from exc
+        raise HTTPException(
+            status_code=502,
+            detail=_remnawave_unavailable_detail(exc, url),
+        ) from exc
 
     try:
         response = PanelCreateUserEnvelope.model_validate(result.json())
     except Exception as exc:
-        raise HTTPException(status_code=502, detail="Unexpected Remnawave API response") from exc
+        raise HTTPException(
+            status_code=502,
+            detail=_unexpected_response_detail(result),
+        ) from exc
 
     return response.response
 
@@ -71,15 +122,23 @@ async def get_internal_squads_ids() -> list[str]:
             result = await client.get(url=url, headers=headers)
             result.raise_for_status()
     except httpx.HTTPStatusError as exc:
-        detail = exc.response.text or "Remnawave API returned an error"
-        raise HTTPException(status_code=exc.response.status_code, detail=detail) from exc
+        raise HTTPException(
+            status_code=exc.response.status_code,
+            detail=_remnawave_error_detail(exc.response),
+        ) from exc
     except httpx.HTTPError as exc:
-        raise HTTPException(status_code=502, detail="Remnawave API is unavailable") from exc
+        raise HTTPException(
+            status_code=502,
+            detail=_remnawave_unavailable_detail(exc, url),
+        ) from exc
 
     try:
         data = PanelInternalSquadsEnvelope.model_validate(result.json())
     except Exception as exc:
-        raise HTTPException(status_code=502, detail="Unexpected Remnawave API response") from exc
+        raise HTTPException(
+            status_code=502,
+            detail=_unexpected_response_detail(result),
+        ) from exc
 
     uuids = [s.uuid for s in data.response.internalSquads]
     return uuids
