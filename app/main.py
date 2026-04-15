@@ -13,12 +13,15 @@ async def create_user(
     _: tokenDep,
     create_user_data: CreateUserRequest
 ) -> CreateUserResponse:
+    internal_squads_uuids = await requests.get_internal_squads_ids()
+
     result = await requests.create_user_request(
         username=create_user_data.username,
         days=create_user_data.days,
         status=create_user_data.status,
         traffic_limit_bytes=create_user_data.traffic_limit_bytes,
         traffic_limit_strategy=create_user_data.traffic_limit_strategy,
+        internal_squads_ids=internal_squads_uuids
     )
 
     if not result.subscriptionUrl:

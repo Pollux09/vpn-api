@@ -64,6 +64,7 @@ nano app/.env
 ```env
 BASE_URL=https://panel.example.com
 CREATE_USER_PATH=/api/users
+INTERNAL_SQUADS_PATH=/api/internal-squads
 API_TOKEN=your_remnawave_api_token
 API_KEY=
 APP_TOKEN=your_app_token
@@ -159,4 +160,3 @@ sudo ufw reload
 ```bash
 sudo ufw status
 ```
-

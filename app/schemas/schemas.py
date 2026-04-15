@@ -35,3 +35,15 @@ class PanelCreateUserResponse(BaseModel):
 
 class PanelCreateUserEnvelope(BaseModel):
     response: PanelCreateUserResponse
+
+
+class InternalSquad(BaseModel):
+    uuid: str
+
+
+class PanelInternalSquadsIds(BaseModel):
+    internalSquads: list[InternalSquad]
+
+
+class PanelInternalSquadsEnvelope(BaseModel):
+    response: PanelInternalSquadsIds
