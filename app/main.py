@@ -21,7 +21,8 @@ async def create_user(
         status=create_user_data.status,
         traffic_limit_bytes=create_user_data.traffic_limit_bytes,
         traffic_limit_strategy=create_user_data.traffic_limit_strategy,
-        internal_squads_ids=internal_squads_uuids
+        hardware_id_device_limit=create_user_data.hardware_id_device_limit,
+        internal_squads_ids=internal_squads_uuids,
     )
 
     if not result.subscriptionUrl:

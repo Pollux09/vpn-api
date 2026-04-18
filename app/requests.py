@@ -1,4 +1,5 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 
 import httpx
 from fastapi import HTTPException
@@ -48,6 +49,7 @@ async def create_user_request(
     status: str = "ACTIVE",
     traffic_limit_bytes: int = 53687091200,
     traffic_limit_strategy: str = "MONTH",
+    hardware_id_device_limit: Optional[int] = None,
 ) -> PanelCreateUserResponse:
     base_url = str(settings.BASE_URL).rstrip("/")
     path = settings.CREATE_USER_PATH.lstrip("/")
@@ -77,6 +79,9 @@ async def create_user_request(
         "trafficLimitStrategy": traffic_limit_strategy,
         "activeInternalSquads": [internal_squads_ids[0]],
     }
+
+    if hardware_id_device_limit is not None:
+        payload["hwidDeviceLimit"] = hardware_id_device_limit
 
     try:
         async with httpx.AsyncClient(timeout=45.0) as client:

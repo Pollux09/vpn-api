@@ -107,6 +107,27 @@ curl -X POST "http://127.0.0.1:6767/create-user" \
 }
 ```
 
+## Если получили 502 Bad Gateway
+
+Минимальный запрос ниже нужно отправлять в это приложение, то есть на
+`/create-user`:
+
+```json
+{
+  "username": "user_001",
+  "days": 30
+}
+```
+
+Напрямую в Remnawave `/api/users` поле `days` отправлять нельзя.
+Приложение само преобразует `days` в обязательное для Remnawave поле
+`expireAt`.
+
+Если 502 возвращает это приложение, в ответе будет JSON с `detail.status_code`,
+`detail.url` и `detail.body`. Если тела ответа нет вообще, 502, скорее всего,
+возвращает внешний reverse proxy перед приложением или контейнер с приложением
+не доступен.
+
 ## Какие поля можно передавать в запросе
 
 Минимальный рабочий запрос:
@@ -126,7 +147,8 @@ curl -X POST "http://127.0.0.1:6767/create-user" \
   "days": 30,
   "status": "ACTIVE",
   "traffic_limit_bytes": 53687091200,
-  "traffic_limit_strategy": "MONTH"
+  "traffic_limit_strategy": "MONTH",
+  "hardware_id_device_limit": 3
 }
 ```
 
@@ -137,6 +159,7 @@ curl -X POST "http://127.0.0.1:6767/create-user" \
 - `status` - статус пользователя
 - `traffic_limit_bytes` - лимит трафика в байтах
 - `traffic_limit_strategy` - стратегия сброса лимита
+- `hardware_id_device_limit` - лимит устройств по HWID для конкретного пользователя
 
 Допустимые значения `traffic_limit_strategy`:
 
@@ -144,6 +167,10 @@ curl -X POST "http://127.0.0.1:6767/create-user" \
 - `DAY`
 - `WEEK`
 - `MONTH`
+
+Поле `hardware_id_device_limit` необязательное. Если его не передавать,
+приложение не будет отправлять `hwidDeviceLimit` в Remnawave, и панель сможет
+использовать свой fallback-лимит по умолчанию.
 
 
 ## Как открыть порт на Ubuntu

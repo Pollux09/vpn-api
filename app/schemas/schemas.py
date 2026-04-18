@@ -10,6 +10,7 @@ class CreateUserRequest(BaseModel):
     status: Literal["ACTIVE", "DISABLED", "LIMITED", "EXPIRED"] = "ACTIVE"
     traffic_limit_bytes: int = Field(default=53_687_091_200, ge=0)
     traffic_limit_strategy: Literal["NO_RESET", "DAY", "WEEK", "MONTH"] = "MONTH"
+    hardware_id_device_limit: Optional[int] = Field(default=None, ge=0)
 
 
 class CreateUserResponse(BaseModel):
@@ -31,6 +32,7 @@ class PanelCreateUserResponse(BaseModel):
 
     expireAt: datetime
     trafficLimitBytes: Optional[int] = None
+    hwidDeviceLimit: Optional[int] = None
 
 
 class PanelCreateUserEnvelope(BaseModel):
